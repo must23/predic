@@ -1,0 +1,145 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[147]:
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+# In[156]:
+
+
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+pre_process = PolynomialFeatures(degree=3)
+pr_model = LinearRegression()
+#X_poly
+
+
+# In[148]:
+
+
+data = pd.read_csv("C:/Users/musto/RepoVC/test/scenario1.csv")
+#data
+
+
+# In[149]:
+
+
+#taking max value of the ID data to know max object detected
+
+
+# In[150]:
+
+
+column_values = data[["id"]].values
+unique_values =  np.unique(column_values)
+max_value = data.id.max()
+
+
+# In[151]:
+
+
+#cyclist_data[n-1] is the cyclist data with id = n; vice versa pedestrian_data
+
+
+# In[152]:
+
+
+cyclist_data=[]
+pedestrian_data=[]
+
+
+# In[153]:
+
+
+for i in range(1, max_value+1):
+    cyclist_data.append(data.groupby(["type", "id"]).get_group(("c", i)))
+    pedestrian_data.append(data.groupby(["type", "id"]).get_group(("p", i)))
+
+
+# In[154]:
+
+
+#Splitting and creating Cyclist and Pedestrian X,Y dataset
+
+
+# In[157]:
+
+
+X_cyclist=[]
+Y_cyclist=[]
+X_pedestrian=[]
+Y_pedestrian=[]
+X_poly_c=[]
+Y_pred_c=[]
+
+
+# In[163]:
+
+
+for j in range(0, max_value):
+    X_cyclist.append(cyclist_data[j][["x"]])
+    Y_cyclist.append(cyclist_data[j][["y"]])
+    X_pedestrian.append(pedestrian_data[j][["x"]])
+    Y_pedestrian.append(pedestrian_data[j][["y"]])
+
+
+# In[166]:
+
+
+for k in range(0, max_value):
+    X_poly_c.append(pre_process.fit_transform(X_cyclist[k]))
+
+
+# In[ ]:
+
+
+#X_poly_c[0], #X_poly_c[1], [0] is for ID 1 and [1] is for ID 2 
+
+
+# In[167]:
+
+
+for l in range(0, max_value):
+    pr_model.fit(X_poly_c[l], Y_cyclist[l])
+    Y_pred_c.append(pr_model.predict(X_poly_c[l]))
+
+
+# In[173]:
+
+
+next_y= pr_model.predict(pre_process.fit_transform([[4]]))
+
+
+# In[ ]:
+
+
+#STILL UNDERCONSTRUCT, ONLY TAKING 
+
+
+# In[186]:
+
+
+#last x position 
+last_x= abs(cyclist_data[0]['x'].iloc[-1])
+mean=abs((cyclist_data[0]['x'].mean(axis=0)))
+print(mean, last_x)
+
+
+# In[187]:
+
+
+post_predicted_list=[]
+
+
+# In[ ]:
+
+
+for i in np.arange (last_x, last_x+8, mean[0]/5):
+    next_y= pr_model.predict(pre_process.fit_transform([[i]]))
+    post_predicted_list.append([i, next_y[0][0]])
+
